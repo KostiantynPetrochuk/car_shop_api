@@ -47,20 +47,20 @@ func (u *User) ValidateCredentials() error {
 	err := row.Scan(&u.ID, &retrievedPassword, &roles)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return errors.New("Credentials invalid")
+			return errors.New("credentials invalid")
 		}
 		return err
 	}
 
 	err = json.Unmarshal(roles, &u.Roles)
 	if err != nil {
-		return errors.New("Failed to parse roles")
+		return errors.New("failed to parse roles")
 	}
 
 	passwordIsValid := utils.CheckPasswordHash(u.Password, retrievedPassword)
 
 	if !passwordIsValid {
-		return errors.New("Credentials invalid")
+		return errors.New("credentials invalid")
 	}
 
 	return nil

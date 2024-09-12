@@ -44,7 +44,7 @@ func VerifyAccessToken(token string) (int64, error) {
 	})
 
 	if err != nil {
-		return 0, errors.New("could not parse token")
+		return 0, errors.New("could not parse Access token")
 	}
 
 	tokenIsValid := parsedToken.Valid
@@ -88,7 +88,7 @@ func VerifyRefreshToken(token string) (int64, string, error) {
 	})
 
 	if err != nil {
-		return 0, "", errors.New("could not parse token")
+		return 0, "", errors.New("could not parse Refresh token")
 	}
 
 	tokenIsValid := parsedToken.Valid

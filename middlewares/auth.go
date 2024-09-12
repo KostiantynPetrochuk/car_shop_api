@@ -54,9 +54,6 @@ func Refresh(context *gin.Context) {
 	}
 
 	userId, login, err := utils.VerifyRefreshToken(token)
-	fmt.Println("refresh middleware userId: ", userId)
-
-	fmt.Println("error: ", err)
 
 	if err != nil {
 		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Not authorized."})
