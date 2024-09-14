@@ -39,7 +39,7 @@ func GetBrands() ([]Brand, error) {
 	`
 	rows, err := db.DB.Query(query)
 	if err != nil {
-		fmt.Println("error: ", err)
+		fmt.Println("get brands error: ", err)
 		return []Brand{}, err
 	}
 
@@ -54,7 +54,7 @@ func GetBrands() ([]Brand, error) {
 
 		err := rows.Scan(&brandID, &brandName, &fileName, &modelID, &modelName, &modelBrandID)
 		if err != nil {
-			fmt.Println("error: ", err)
+			fmt.Println("getbrands error: ", err)
 			return []Brand{}, err
 		}
 

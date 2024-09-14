@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -25,8 +24,6 @@ func Authenticate(context *gin.Context) {
 	}
 
 	userId, err := utils.VerifyAccessToken(token)
-
-	fmt.Println("error: ", err)
 
 	if err != nil {
 		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Not authorized."})
@@ -62,6 +59,5 @@ func Refresh(context *gin.Context) {
 
 	context.Set("userId", userId)
 	context.Set("login", login)
-
 	context.Next()
 }

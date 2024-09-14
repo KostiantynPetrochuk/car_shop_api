@@ -15,10 +15,15 @@ func RegisterRoutes(server *gin.Engine) {
 	server.GET("/brands", getBrands)
 	server.POST("/brands", addBrand)
 	//
-	// server.GET("/models", getModels)
+	server.GET("/features", getFeatures)
+	server.POST("/features", addFeature)
+	//
 	server.POST("/models", addModel)
 	//
 	authenticated := server.Group("/")
 	authenticated.Use(middlewares.Authenticate)
 	//
+	authenticated.GET("/cars", getCars)
+	authenticated.GET("/cars/:id", getCar)
+	authenticated.POST("/cars", addCar)
 }

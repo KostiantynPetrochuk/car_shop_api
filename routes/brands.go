@@ -25,7 +25,6 @@ func addBrand(context *gin.Context) {
 
 	createdBrand, err := brand.Save()
 	if err != nil {
-		fmt.Println("error: ", err)
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not save brand."})
 		return
 	}

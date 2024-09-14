@@ -66,4 +66,64 @@ func createTables() {
 		fmt.Println("err: ", err)
 		panic("Could not created models table.")
 	}
+
+	createFeaturesTable := `
+	CREATE TABLE IF NOT EXISTS features (
+		id SERIAL PRIMARY KEY,
+		feature_name TEXT NOT NULL,
+		category TEXT NOT NULL
+	)
+	`
+
+	_, err = DB.Exec(createFeaturesTable)
+	if err != nil {
+		fmt.Println("err: ", err)
+		panic("Could not created features table.")
+	}
+
+	createCarsTable := `
+	CREATE TABLE IF NOT EXISTS cars (
+    	id SERIAL PRIMARY KEY,
+    	vin TEXT NOT NULL UNIQUE,
+    	brand_id INTEGER NOT NULL,
+    	model_id INTEGER NOT NULL,
+    	body_type TEXT NOT NULL,
+    	fuel_type TEXT NOT NULL,
+    	year INTEGER NOT NULL,
+    	transmission TEXT NOT NULL,
+    	drive_type TEXT NOT NULL,
+    	condition TEXT NOT NULL,
+    	engine_size FLOAT NOT NULL,
+    	door_count INTEGER NOT NULL,
+    	cylinder_count INTEGER NOT NULL,
+    	color TEXT NOT NULL,
+    	mileage INTEGER NOT NULL,
+    	image_names JSONB,
+    	FOREIGN KEY (brand_id) REFERENCES brands(id),
+    	FOREIGN KEY (model_id) REFERENCES models(id)
+	)
+	`
+
+	_, err = DB.Exec(createCarsTable)
+	if err != nil {
+		fmt.Println("err: ", err)
+		panic("Could not created cars table.")
+	}
+
+	createCarFeaturesTable := `
+	CREATE TABLE IF NOT EXISTS car_features (
+		id SERIAL PRIMARY KEY,
+		car_id INTEGER NOT NULL,
+		feature_id INTEGER NOT NULL,
+		FOREIGN KEY (car_id) REFERENCES cars(id),
+		FOREIGN KEY (feature_id) REFERENCES features(id)
+	)
+	`
+
+	_, err = DB.Exec(createCarFeaturesTable)
+	if err != nil {
+		fmt.Println("err: ", err)
+		panic("Could not created car_features table.")
+	}
+
 }
