@@ -2,11 +2,11 @@ package models
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 
 	"example.com/db"
 	"example.com/utils"
+	"github.com/lib/pq"
 )
 
 type User struct {
@@ -43,8 +43,8 @@ func (u *User) ValidateCredentials() error {
 	row := db.DB.QueryRow(query, u.Login)
 
 	var retrievedPassword string
-	var roles []byte
-	err := row.Scan(&u.ID, &retrievedPassword, &roles)
+	var roles []string
+	err := row.Scan(&u.ID, &retrievedPassword, pq.Array(&roles))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("credentials invalid")
@@ -52,13 +52,9 @@ func (u *User) ValidateCredentials() error {
 		return err
 	}
 
-	err = json.Unmarshal(roles, &u.Roles)
-	if err != nil {
-		return errors.New("failed to parse roles")
-	}
+	u.Roles = roles
 
 	passwordIsValid := utils.CheckPasswordHash(u.Password, retrievedPassword)
-
 	if !passwordIsValid {
 		return errors.New("credentials invalid")
 	}

@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 
 	"example.com/db"
 )
@@ -82,6 +83,10 @@ func GetBrands() ([]Brand, error) {
 	for _, brand := range brandMap {
 		brands = append(brands, *brand)
 	}
+
+	sort.Slice(brands, func(i, j int) bool {
+		return brands[i].ID < brands[j].ID
+	})
 
 	return brands, nil
 }

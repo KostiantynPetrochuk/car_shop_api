@@ -99,6 +99,7 @@ func createTables() {
     	color TEXT NOT NULL,
     	mileage INTEGER NOT NULL,
     	image_names JSONB,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     	FOREIGN KEY (brand_id) REFERENCES brands(id),
     	FOREIGN KEY (model_id) REFERENCES models(id)
 	)

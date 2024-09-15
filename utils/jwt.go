@@ -11,6 +11,9 @@ import (
 var accessSecretKey string
 var refreshSecretKey string
 
+const ACCESS_TOKEN_EXPIRE_TIME = time.Hour * 1
+const REFRESH_TOKEN_EXPIRE_TIME = time.Hour * 336
+
 func init() {
 	accessSecretKey = config.GetEnv("ACCESS_TOKEN_SECRET")
 	if accessSecretKey == "" {
@@ -26,7 +29,7 @@ func GenerateAccessToken(login string, userId int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"login":  login,
 		"userId": userId,
-		"exp":    time.Now().Add(time.Minute * 15).Unix(),
+		"exp":    time.Now().Add(ACCESS_TOKEN_EXPIRE_TIME).Unix(),
 	})
 
 	return token.SignedString([]byte(accessSecretKey))
@@ -70,7 +73,7 @@ func GenerateRefreshToken(login string, userId int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"login":  login,
 		"userId": userId,
-		"exp":    time.Now().Add(time.Hour * 48).Unix(),
+		"exp":    time.Now().Add(REFRESH_TOKEN_EXPIRE_TIME).Unix(),
 	})
 
 	return token.SignedString([]byte(refreshSecretKey))

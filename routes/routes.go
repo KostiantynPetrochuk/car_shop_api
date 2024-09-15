@@ -13,17 +13,21 @@ func RegisterRoutes(server *gin.Engine) {
 	server.POST("/refresh", middlewares.Refresh, refresh)
 	//
 	server.GET("/brands", getBrands)
-	server.POST("/brands", addBrand)
 	//
 	server.GET("/features", getFeatures)
-	server.POST("/features", addFeature)
 	//
-	server.POST("/models", addModel)
+	server.GET("/cars", getCars)
+	server.GET("/cars/:id", getCar)
+	//
 	//
 	authenticated := server.Group("/")
 	authenticated.Use(middlewares.Authenticate)
 	//
-	authenticated.GET("/cars", getCars)
-	authenticated.GET("/cars/:id", getCar)
 	authenticated.POST("/cars", addCar)
+	//
+	authenticated.POST("/models", addModel)
+	//
+	authenticated.POST("/features", addFeature)
+	//
+	authenticated.POST("/brands", addBrand)
 }

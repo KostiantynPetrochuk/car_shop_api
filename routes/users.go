@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const ACCESS_TOKEN_EXPIRE_TIME = time.Hour * 1
+
 func signup(context *gin.Context) {
 	var user models.User
 	err := context.ShouldBindJSON(&user)
@@ -40,7 +42,6 @@ func signin(context *gin.Context) {
 	err = user.ValidateCredentials()
 
 	if err != nil {
-		fmt.Println("error: ", err)
 		context.JSON(http.StatusUnauthorized, gin.H{"message": "Could not authenticated user."})
 		return
 	}
@@ -56,11 +57,8 @@ func signin(context *gin.Context) {
 		return
 	}
 
-	fmt.Println("Login user: ", user)
-
-	const EXPIRE_TIME = time.Hour * 48
 	now := time.Now()
-	expiresAt := now.Add(EXPIRE_TIME)
+	expiresAt := now.Add(ACCESS_TOKEN_EXPIRE_TIME)
 	expiresIn := expiresAt.Unix()
 	context.JSON(http.StatusOK, gin.H{
 		"message": "Login successful.",
@@ -103,9 +101,8 @@ func refresh(context *gin.Context) {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not authenticated user."})
 		return
 	}
-	const EXPIRE_TIME = time.Hour * 48
 	now := time.Now()
-	expiresAt := now.Add(EXPIRE_TIME)
+	expiresAt := now.Add(ACCESS_TOKEN_EXPIRE_TIME)
 	expiresIn := expiresAt.Unix()
 
 	context.JSON(http.StatusOK, gin.H{"message": "Login successful.", "tokens": gin.H{

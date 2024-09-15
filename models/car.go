@@ -26,6 +26,7 @@ type Car struct {
 	ImageNames    json.RawMessage
 	BrandName     string `json:"BrandName"`
 	ModelName     string `json:"ModelName"`
+	CreatedAt     string `json:"CreatedAt"`
 	Features      []Feature
 }
 
@@ -50,16 +51,16 @@ func (c *Car) Save() error {
 func GetCars() ([]Car, error) {
 	var cars []Car
 	query := `
-        SELECT 
-            cars.id, cars.vin, cars.brand_id, cars.model_id, cars.body_type, cars.mileage, cars.fuel_type, cars.year, 
-            cars.transmission, cars.drive_type, cars.condition, cars.engine_size, cars.door_count, cars.cylinder_count, 
-            cars.color, cars.image_names, brands.brand_name AS brand_name, models.model_name AS model_name
-        FROM 
-            cars
-        JOIN 
-            brands ON cars.brand_id = brands.id
-        JOIN 
-            models ON cars.model_id = models.id`
+		SELECT 
+			cars.id, cars.vin, cars.brand_id, cars.model_id, cars.body_type, cars.mileage, cars.fuel_type, cars.year, 
+			cars.transmission, cars.drive_type, cars.condition, cars.engine_size, cars.door_count, cars.cylinder_count, 
+			cars.color, cars.image_names, cars.created_at, brands.brand_name AS brand_name, models.model_name AS model_name
+		FROM 
+			cars
+		JOIN 
+			brands ON cars.brand_id = brands.id
+		JOIN 
+			models ON cars.model_id = models.id`
 
 	rows, err := db.DB.Query(query)
 	if err != nil {
@@ -70,7 +71,7 @@ func GetCars() ([]Car, error) {
 
 	for rows.Next() {
 		var car Car
-		err := rows.Scan(&car.ID, &car.VIN, &car.BrandId, &car.ModelId, &car.BodyType, &car.Mileage, &car.FuelType, &car.Year, &car.Transmission, &car.DriveType, &car.Condition, &car.EngineSize, &car.DoorCount, &car.CylinderCount, &car.Color, &car.ImageNames, &car.BrandName, &car.ModelName)
+		err := rows.Scan(&car.ID, &car.VIN, &car.BrandId, &car.ModelId, &car.BodyType, &car.Mileage, &car.FuelType, &car.Year, &car.Transmission, &car.DriveType, &car.Condition, &car.EngineSize, &car.DoorCount, &car.CylinderCount, &car.Color, &car.ImageNames, &car.CreatedAt, &car.BrandName, &car.ModelName)
 		if err != nil {
 			log.Println("Error scanning row:", err)
 			return nil, err
@@ -91,7 +92,7 @@ func GetCarById(id int64) (Car, error) {
 		SELECT 
 			cars.id, cars.vin, cars.brand_id, cars.model_id, cars.body_type, cars.mileage, cars.fuel_type, cars.year, 
 			cars.transmission, cars.drive_type, cars.condition, cars.engine_size, cars.door_count, cars.cylinder_count, 
-			cars.color, cars.image_names, brands.brand_name AS brand_name, models.model_name AS model_name
+			cars.color, cars.image_names, cars.created_at, brands.brand_name AS brand_name, models.model_name AS model_name
 		FROM 
 			cars
 		JOIN 
@@ -101,21 +102,21 @@ func GetCarById(id int64) (Car, error) {
 		WHERE 
 			cars.id = $1`
 
-	err := db.DB.QueryRow(query, id).Scan(&car.ID, &car.VIN, &car.BrandId, &car.ModelId, &car.BodyType, &car.Mileage, &car.FuelType, &car.Year, &car.Transmission, &car.DriveType, &car.Condition, &car.EngineSize, &car.DoorCount, &car.CylinderCount, &car.Color, &car.ImageNames, &car.BrandName, &car.ModelName)
+	err := db.DB.QueryRow(query, id).Scan(&car.ID, &car.VIN, &car.BrandId, &car.ModelId, &car.BodyType, &car.Mileage, &car.FuelType, &car.Year, &car.Transmission, &car.DriveType, &car.Condition, &car.EngineSize, &car.DoorCount, &car.CylinderCount, &car.Color, &car.ImageNames, &car.CreatedAt, &car.BrandName, &car.ModelName)
 	if err != nil {
 		log.Println("Error scanning row:", err)
 		return car, err
 	}
 
 	featuresQuery := `
-        SELECT 
-            features.id, features.feature_name, features.category
-        FROM 
-            features
-        JOIN 
-            car_features ON features.id = car_features.feature_id
-        WHERE 
-            car_features.car_id = $1`
+		SELECT 
+			features.id, features.feature_name, features.category
+		FROM 
+			features
+		JOIN 
+			car_features ON features.id = car_features.feature_id
+		WHERE 
+			car_features.car_id = $1`
 
 	rows, err := db.DB.Query(featuresQuery, id)
 	if err != nil {
