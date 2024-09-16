@@ -59,7 +59,7 @@ func signin(context *gin.Context) {
 
 	now := time.Now()
 	expiresAt := now.Add(ACCESS_TOKEN_EXPIRE_TIME)
-	expiresIn := expiresAt.Unix()
+	expiresIn := expiresAt.UnixNano() / int64(time.Millisecond)
 	context.JSON(http.StatusOK, gin.H{
 		"message": "Login successful.",
 		"user":    user,
@@ -103,7 +103,7 @@ func refresh(context *gin.Context) {
 	}
 	now := time.Now()
 	expiresAt := now.Add(ACCESS_TOKEN_EXPIRE_TIME)
-	expiresIn := expiresAt.Unix()
+	expiresIn := expiresAt.UnixNano() / int64(time.Millisecond)
 
 	context.JSON(http.StatusOK, gin.H{"message": "Login successful.", "tokens": gin.H{
 		"accessToken":  accessToken,
