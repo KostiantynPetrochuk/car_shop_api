@@ -59,10 +59,10 @@ func addCar(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid door count."})
 		return
 	}
-	car.CylinderCount, err = strconv.Atoi(context.PostForm("cylinder_count"))
+	car.Price, err = strconv.Atoi(context.PostForm("price"))
 	if err != nil {
-		fmt.Println("Error converting cylinder_count:", err)
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid cylinder count."})
+		fmt.Println("Error converting price:", err)
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid price."})
 		return
 	}
 	car.Color = context.PostForm("color")

@@ -95,7 +95,7 @@ func createTables() {
     	condition TEXT NOT NULL,
     	engine_size FLOAT NOT NULL,
     	door_count INTEGER NOT NULL,
-    	cylinder_count INTEGER NOT NULL,
+    	price INTEGER NOT NULL,
     	color TEXT NOT NULL,
     	mileage INTEGER NOT NULL,
     	image_names JSONB,
