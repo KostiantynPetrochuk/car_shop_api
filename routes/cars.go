@@ -165,14 +165,26 @@ func addCar(context *gin.Context) {
 }
 
 func getCars(context *gin.Context) {
-	cars, err := models.GetCars()
+	offset, err := strconv.Atoi(context.DefaultQuery("offset", "0"))
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid offset parameter"})
+		return
+	}
+
+	limit, err := strconv.Atoi(context.DefaultQuery("limit", "5"))
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid limit parameter"})
+		return
+	}
+
+	cars, total, err := models.GetCars(offset, limit)
 	if err != nil {
 		fmt.Println("error: ", err)
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not get cars."})
 		return
 	}
 
-	context.JSON(http.StatusOK, gin.H{"cars": cars})
+	context.JSON(http.StatusOK, gin.H{"cars": cars, "total": total})
 }
 
 func getCar(context *gin.Context) {
