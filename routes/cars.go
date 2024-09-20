@@ -203,3 +203,31 @@ func getCar(context *gin.Context) {
 
 	context.JSON(http.StatusOK, gin.H{"car": car})
 }
+
+func getFeaturedCars(context *gin.Context) {
+	intactCars, damagedCars, err := models.GetFeaturedCars()
+	if err != nil {
+		fmt.Println("error: ", err)
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not get featured cars."})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"intactCars": intactCars, "damagedCars": damagedCars})
+}
+
+func getCarsByBrand(context *gin.Context) {
+	id, err := strconv.Atoi(context.Param("id"))
+	if err != nil {
+		fmt.Println("error: ", err)
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid brand ID."})
+		return
+	}
+	cars, err := models.GetCarsByBrand(id)
+	if err != nil {
+		fmt.Println("error: ", err)
+		context.JSON(http.StatusNotFound, gin.H{"message": "Cars not found."})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"cars": cars})
+}

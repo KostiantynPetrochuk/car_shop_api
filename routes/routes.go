@@ -18,6 +18,8 @@ func RegisterRoutes(server *gin.Engine) {
 	//
 	server.GET("/cars", getCars)
 	server.GET("/cars/:id", getCar)
+	server.GET("/cars/brand/:id", getCarsByBrand)
+	server.GET("/featured-cars", getFeaturedCars)
 	//
 	//
 	authenticated := server.Group("/")
