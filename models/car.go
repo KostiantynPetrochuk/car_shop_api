@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"example.com/db"
@@ -50,15 +51,35 @@ func (c *Car) Save() error {
 	return nil
 }
 
-func GetCars(offset int, limit int, condition string) ([]Car, int, error) {
+func GetCars(offset int, limit int, condition string, brand string) ([]Car, int, error) {
 	var cars []Car
 	var total int
 
 	countQuery := `SELECT COUNT(*) FROM cars`
+	var countConditions []string
 	if condition != "" {
-		countQuery += ` WHERE condition IN (` + formatCondition(condition) + `)`
+		countConditions = append(countConditions, `condition IN (`+formatCondition(condition)+`)`)
 	}
-	err := db.DB.QueryRow(countQuery).Scan(&total)
+
+	var brandId int
+	var err error
+	if brand != "" {
+		brandId, err = strconv.Atoi(brand)
+		if err == nil {
+			countConditions = append(countConditions, `brand_id = $1`)
+		}
+	}
+
+	if len(countConditions) > 0 {
+		countQuery += ` WHERE ` + strings.Join(countConditions, ` AND `)
+	}
+
+	var countArgs []interface{}
+	if brand != "" {
+		countArgs = append(countArgs, brandId)
+	}
+
+	err = db.DB.QueryRow(countQuery, countArgs...).Scan(&total)
 	if err != nil {
 		log.Println("Error executing count query:", err)
 		return nil, 0, err
@@ -75,12 +96,25 @@ func GetCars(offset int, limit int, condition string) ([]Car, int, error) {
 			brands ON cars.brand_id = brands.id
 		JOIN 
 			models ON cars.model_id = models.id`
+	var conditions []string
 	if condition != "" {
-		query += ` WHERE cars.condition IN (` + formatCondition(condition) + `)`
+		conditions = append(conditions, `cars.condition IN (`+formatCondition(condition)+`)`)
+	}
+	if brand != "" {
+		conditions = append(conditions, `cars.brand_id = $3`)
+	}
+	if len(conditions) > 0 {
+		query += ` WHERE ` + strings.Join(conditions, ` AND `)
 	}
 	query += ` ORDER BY cars.created_at DESC LIMIT $2 OFFSET $1`
 
-	rows, err := db.DB.Query(query, offset, limit)
+	var args []interface{}
+	args = append(args, offset, limit)
+	if brand != "" {
+		args = append(args, brandId)
+	}
+
+	rows, err := db.DB.Query(query, args...)
 	if err != nil {
 		log.Println("Error executing query:", err)
 		return nil, 0, err

@@ -179,7 +179,8 @@ func getCars(context *gin.Context) {
 
 	condition := context.DefaultQuery("condition", "")
 
-	cars, total, err := models.GetCars(offset, limit, condition)
+	brand := context.DefaultQuery("brand", "")
+	cars, total, err := models.GetCars(offset, limit, condition, brand)
 	if err != nil {
 		fmt.Println("error: ", err)
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not get cars."})
