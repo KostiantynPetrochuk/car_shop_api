@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"example.com/db"
 )
@@ -49,11 +50,14 @@ func (c *Car) Save() error {
 	return nil
 }
 
-func GetCars(offset int, limit int) ([]Car, int, error) {
+func GetCars(offset int, limit int, condition string) ([]Car, int, error) {
 	var cars []Car
 	var total int
 
 	countQuery := `SELECT COUNT(*) FROM cars`
+	if condition != "" {
+		countQuery += ` WHERE condition IN (` + formatCondition(condition) + `)`
+	}
 	err := db.DB.QueryRow(countQuery).Scan(&total)
 	if err != nil {
 		log.Println("Error executing count query:", err)
@@ -61,18 +65,20 @@ func GetCars(offset int, limit int) ([]Car, int, error) {
 	}
 
 	query := `
-        SELECT 
-            cars.id, cars.vin, cars.brand_id, cars.model_id, cars.body_type, cars.mileage, cars.fuel_type, cars.year, 
-            cars.transmission, cars.drive_type, cars.condition, cars.engine_size, cars.door_count, cars.price, 
-            cars.color, cars.image_names, cars.created_at, brands.brand_name AS brand_name, models.model_name AS model_name
-        FROM 
-            cars
-        JOIN 
-            brands ON cars.brand_id = brands.id
-        JOIN 
-            models ON cars.model_id = models.id
-        ORDER BY cars.created_at DESC
-        LIMIT $2 OFFSET $1`
+		SELECT 
+			cars.id, cars.vin, cars.brand_id, cars.model_id, cars.body_type, cars.mileage, cars.fuel_type, cars.year, 
+			cars.transmission, cars.drive_type, cars.condition, cars.engine_size, cars.door_count, cars.price, 
+			cars.color, cars.image_names, cars.created_at, brands.brand_name AS brand_name, models.model_name AS model_name
+		FROM 
+			cars
+		JOIN 
+			brands ON cars.brand_id = brands.id
+		JOIN 
+			models ON cars.model_id = models.id`
+	if condition != "" {
+		query += ` WHERE cars.condition IN (` + formatCondition(condition) + `)`
+	}
+	query += ` ORDER BY cars.created_at DESC LIMIT $2 OFFSET $1`
 
 	rows, err := db.DB.Query(query, offset, limit)
 	if err != nil {
@@ -96,6 +102,14 @@ func GetCars(offset int, limit int) ([]Car, int, error) {
 	}
 
 	return cars, total, nil
+}
+
+func formatCondition(condition string) string {
+	conditions := strings.Split(condition, ",")
+	for i := range conditions {
+		conditions[i] = "'" + strings.TrimSpace(conditions[i]) + "'"
+	}
+	return strings.Join(conditions, ",")
 }
 
 func GetCarById(id int64) (Car, error) {
