@@ -51,7 +51,7 @@ func (c *Car) Save() error {
 	return nil
 }
 
-func GetCars(offset int, limit int, condition string, brand string) ([]Car, int, error) {
+func GetCars(offset int, limit int, condition string, brand string, model string) ([]Car, int, error) {
 	var cars []Car
 	var total int
 
@@ -70,6 +70,24 @@ func GetCars(offset int, limit int, condition string, brand string) ([]Car, int,
 		}
 	}
 
+	var modelIds []int
+	if model != "" {
+		modelParts := strings.Split(model, ",")
+		for _, part := range modelParts {
+			modelId, err := strconv.Atoi(strings.TrimSpace(part))
+			if err == nil {
+				modelIds = append(modelIds, modelId)
+			}
+		}
+		if len(modelIds) > 0 {
+			modelPlaceholders := make([]string, len(modelIds))
+			for i := range modelIds {
+				modelPlaceholders[i] = "$" + strconv.Itoa(i+2)
+			}
+			countConditions = append(countConditions, `model_id IN (`+strings.Join(modelPlaceholders, ",")+`)`)
+		}
+	}
+
 	if len(countConditions) > 0 {
 		countQuery += ` WHERE ` + strings.Join(countConditions, ` AND `)
 	}
@@ -77,6 +95,9 @@ func GetCars(offset int, limit int, condition string, brand string) ([]Car, int,
 	var countArgs []interface{}
 	if brand != "" {
 		countArgs = append(countArgs, brandId)
+	}
+	for _, modelId := range modelIds {
+		countArgs = append(countArgs, modelId)
 	}
 
 	err = db.DB.QueryRow(countQuery, countArgs...).Scan(&total)
@@ -103,6 +124,13 @@ func GetCars(offset int, limit int, condition string, brand string) ([]Car, int,
 	if brand != "" {
 		conditions = append(conditions, `cars.brand_id = $3`)
 	}
+	if len(modelIds) > 0 {
+		modelPlaceholders := make([]string, len(modelIds))
+		for i := range modelIds {
+			modelPlaceholders[i] = "$" + strconv.Itoa(i+4)
+		}
+		conditions = append(conditions, `cars.model_id IN (`+strings.Join(modelPlaceholders, ",")+`)`)
+	}
 	if len(conditions) > 0 {
 		query += ` WHERE ` + strings.Join(conditions, ` AND `)
 	}
@@ -112,6 +140,9 @@ func GetCars(offset int, limit int, condition string, brand string) ([]Car, int,
 	args = append(args, offset, limit)
 	if brand != "" {
 		args = append(args, brandId)
+	}
+	for _, modelId := range modelIds {
+		args = append(args, modelId)
 	}
 
 	rows, err := db.DB.Query(query, args...)
