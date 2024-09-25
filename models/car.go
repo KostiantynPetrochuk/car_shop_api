@@ -51,7 +51,7 @@ func (c *Car) Save() error {
 	return nil
 }
 
-func GetCars(offset int, limit int, condition string, brand string, model string) ([]Car, int, error) {
+func GetCars(offset int, limit int, condition string, brand string, model string, bodyType string) ([]Car, int, error) {
 	var cars []Car
 	var total int
 
@@ -85,6 +85,17 @@ func GetCars(offset int, limit int, condition string, brand string, model string
 				modelPlaceholders[i] = "$" + strconv.Itoa(i+2)
 			}
 			countConditions = append(countConditions, `model_id IN (`+strings.Join(modelPlaceholders, ",")+`)`)
+		}
+	}
+
+	var bodyTypes []string
+	if bodyType != "" {
+		bodyTypeParts := strings.Split(bodyType, ",")
+		for _, part := range bodyTypeParts {
+			bodyTypes = append(bodyTypes, "'"+strings.TrimSpace(part)+"'")
+		}
+		if len(bodyTypes) > 0 {
+			countConditions = append(countConditions, `body_type IN (`+strings.Join(bodyTypes, ",")+`)`)
 		}
 	}
 
@@ -130,6 +141,9 @@ func GetCars(offset int, limit int, condition string, brand string, model string
 			modelPlaceholders[i] = "$" + strconv.Itoa(i+4)
 		}
 		conditions = append(conditions, `cars.model_id IN (`+strings.Join(modelPlaceholders, ",")+`)`)
+	}
+	if len(bodyTypes) > 0 {
+		conditions = append(conditions, `cars.body_type IN (`+strings.Join(bodyTypes, ",")+`)`)
 	}
 	if len(conditions) > 0 {
 		query += ` WHERE ` + strings.Join(conditions, ` AND `)
