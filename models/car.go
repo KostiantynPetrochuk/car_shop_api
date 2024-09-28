@@ -33,6 +33,17 @@ type Car struct {
 	Features     []Feature
 }
 
+type CarFilter struct {
+	Offset      int
+	Limit       int
+	Condition   string
+	Brand       string
+	Model       string
+	BodyType    string
+	MileageFrom int
+	MileageTo   int
+}
+
 func (c *Car) Save() error {
 	query := `INSERT INTO cars(vin, brand_id, model_id, body_type, mileage, fuel_type, year, transmission, drive_type, condition, engine_size, door_count, price, color, image_names) 
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`
@@ -51,28 +62,31 @@ func (c *Car) Save() error {
 	return nil
 }
 
-func GetCars(offset int, limit int, condition string, brand string, model string, bodyType string) ([]Car, int, error) {
+func GetCars(filter CarFilter) ([]Car, int, error) {
 	var cars []Car
 	var total int
+	argIndex := 1
 
 	countQuery := `SELECT COUNT(*) FROM cars`
 	var countConditions []string
-	if condition != "" {
-		countConditions = append(countConditions, `condition IN (`+formatCondition(condition)+`)`)
+
+	if filter.Condition != "" {
+		countConditions = append(countConditions, `condition IN (`+formatCondition(filter.Condition)+`)`)
 	}
 
 	var brandId int
 	var err error
-	if brand != "" {
-		brandId, err = strconv.Atoi(brand)
+	if filter.Brand != "" {
+		brandId, err = strconv.Atoi(filter.Brand)
 		if err == nil {
-			countConditions = append(countConditions, `brand_id = $1`)
+			countConditions = append(countConditions, `brand_id = $`+strconv.Itoa(argIndex))
+			argIndex++
 		}
 	}
 
 	var modelIds []int
-	if model != "" {
-		modelParts := strings.Split(model, ",")
+	if filter.Model != "" {
+		modelParts := strings.Split(filter.Model, ",")
 		for _, part := range modelParts {
 			modelId, err := strconv.Atoi(strings.TrimSpace(part))
 			if err == nil {
@@ -82,15 +96,16 @@ func GetCars(offset int, limit int, condition string, brand string, model string
 		if len(modelIds) > 0 {
 			modelPlaceholders := make([]string, len(modelIds))
 			for i := range modelIds {
-				modelPlaceholders[i] = "$" + strconv.Itoa(i+2)
+				modelPlaceholders[i] = "$" + strconv.Itoa(argIndex)
+				argIndex++
 			}
 			countConditions = append(countConditions, `model_id IN (`+strings.Join(modelPlaceholders, ",")+`)`)
 		}
 	}
 
 	var bodyTypes []string
-	if bodyType != "" {
-		bodyTypeParts := strings.Split(bodyType, ",")
+	if filter.BodyType != "" {
+		bodyTypeParts := strings.Split(filter.BodyType, ",")
 		for _, part := range bodyTypeParts {
 			bodyTypes = append(bodyTypes, "'"+strings.TrimSpace(part)+"'")
 		}
@@ -99,16 +114,31 @@ func GetCars(offset int, limit int, condition string, brand string, model string
 		}
 	}
 
+	if filter.MileageFrom > 0 {
+		countConditions = append(countConditions, `mileage >= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
+	if filter.MileageTo > 0 {
+		countConditions = append(countConditions, `mileage <= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
+
 	if len(countConditions) > 0 {
 		countQuery += ` WHERE ` + strings.Join(countConditions, ` AND `)
 	}
 
 	var countArgs []interface{}
-	if brand != "" {
+	if filter.Brand != "" {
 		countArgs = append(countArgs, brandId)
 	}
 	for _, modelId := range modelIds {
 		countArgs = append(countArgs, modelId)
+	}
+	if filter.MileageFrom > 0 {
+		countArgs = append(countArgs, filter.MileageFrom)
+	}
+	if filter.MileageTo > 0 {
+		countArgs = append(countArgs, filter.MileageTo)
 	}
 
 	err = db.DB.QueryRow(countQuery, countArgs...).Scan(&total)
@@ -117,46 +147,65 @@ func GetCars(offset int, limit int, condition string, brand string, model string
 		return nil, 0, err
 	}
 
+	argIndex = 3
 	query := `
-		SELECT 
-			cars.id, cars.vin, cars.brand_id, cars.model_id, cars.body_type, cars.mileage, cars.fuel_type, cars.year, 
-			cars.transmission, cars.drive_type, cars.condition, cars.engine_size, cars.door_count, cars.price, 
+		SELECT
+			cars.id, cars.vin, cars.brand_id, cars.model_id, cars.body_type, cars.mileage, cars.fuel_type, cars.year,
+			cars.transmission, cars.drive_type, cars.condition, cars.engine_size, cars.door_count, cars.price,
 			cars.color, cars.image_names, cars.created_at, brands.brand_name AS brand_name, models.model_name AS model_name
-		FROM 
+		FROM
 			cars
-		JOIN 
+		JOIN
 			brands ON cars.brand_id = brands.id
-		JOIN 
+		JOIN
 			models ON cars.model_id = models.id`
+
 	var conditions []string
-	if condition != "" {
-		conditions = append(conditions, `cars.condition IN (`+formatCondition(condition)+`)`)
+	if filter.Condition != "" {
+		conditions = append(conditions, `cars.condition IN (`+formatCondition(filter.Condition)+`)`)
 	}
-	if brand != "" {
-		conditions = append(conditions, `cars.brand_id = $3`)
+	if filter.Brand != "" {
+		conditions = append(conditions, `cars.brand_id = $`+strconv.Itoa(argIndex))
+		argIndex++
 	}
 	if len(modelIds) > 0 {
 		modelPlaceholders := make([]string, len(modelIds))
 		for i := range modelIds {
-			modelPlaceholders[i] = "$" + strconv.Itoa(i+4)
+			modelPlaceholders[i] = "$" + strconv.Itoa(argIndex)
+			argIndex++
 		}
 		conditions = append(conditions, `cars.model_id IN (`+strings.Join(modelPlaceholders, ",")+`)`)
 	}
 	if len(bodyTypes) > 0 {
 		conditions = append(conditions, `cars.body_type IN (`+strings.Join(bodyTypes, ",")+`)`)
 	}
+	if filter.MileageFrom > 0 {
+		conditions = append(conditions, `cars.mileage >= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
+	if filter.MileageTo > 0 {
+		conditions = append(conditions, `cars.mileage <= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
+
 	if len(conditions) > 0 {
 		query += ` WHERE ` + strings.Join(conditions, ` AND `)
 	}
 	query += ` ORDER BY cars.created_at DESC LIMIT $2 OFFSET $1`
 
 	var args []interface{}
-	args = append(args, offset, limit)
-	if brand != "" {
+	args = append(args, filter.Offset, filter.Limit)
+	if filter.Brand != "" {
 		args = append(args, brandId)
 	}
 	for _, modelId := range modelIds {
 		args = append(args, modelId)
+	}
+	if filter.MileageFrom > 0 {
+		args = append(args, filter.MileageFrom)
+	}
+	if filter.MileageTo > 0 {
+		args = append(args, filter.MileageTo)
 	}
 
 	rows, err := db.DB.Query(query, args...)

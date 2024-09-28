@@ -182,8 +182,38 @@ func getCars(context *gin.Context) {
 	brand := context.DefaultQuery("brand", "")
 	model := context.DefaultQuery("model", "")
 	bodyType := context.DefaultQuery("bodyType", "")
+	mileageFromStr := context.DefaultQuery("mileageFrom", "")
+	mileageToStr := context.DefaultQuery("mileageTo", "")
 
-	cars, total, err := models.GetCars(offset, limit, condition, brand, model, bodyType)
+	var mileageFrom, mileageTo int
+	if mileageFromStr != "" {
+		mileageFrom, err = strconv.Atoi(mileageFromStr)
+		if err != nil {
+			context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid mileageFrom parameter"})
+			return
+		}
+	}
+
+	if mileageToStr != "" {
+		mileageTo, err = strconv.Atoi(mileageToStr)
+		if err != nil {
+			context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid mileageTo parameter"})
+			return
+		}
+	}
+
+	carsFilter := models.CarFilter{
+		Offset:      offset,
+		Limit:       limit,
+		Condition:   condition,
+		Brand:       brand,
+		Model:       model,
+		BodyType:    bodyType,
+		MileageFrom: mileageFrom,
+		MileageTo:   mileageTo,
+	}
+
+	cars, total, err := models.GetCars(carsFilter)
 	if err != nil {
 		fmt.Println("error: ", err)
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not get cars."})
