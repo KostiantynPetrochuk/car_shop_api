@@ -34,15 +34,16 @@ type Car struct {
 }
 
 type CarFilter struct {
-	Offset      int
-	Limit       int
-	Condition   string
-	Brand       string
-	Model       string
-	BodyType    string
-	MileageFrom int
-	MileageTo   int
-	FuelType    string
+	Offset       int
+	Limit        int
+	Condition    string
+	Brand        string
+	Model        string
+	BodyType     string
+	MileageFrom  int
+	MileageTo    int
+	FuelType     string
+	Transmission string
 }
 
 func (c *Car) Save() error {
@@ -126,6 +127,17 @@ func GetCars(filter CarFilter) ([]Car, int, error) {
 		}
 	}
 
+	var transmissions []string
+	if filter.Transmission != "" {
+		transmissionParts := strings.Split(filter.Transmission, ",")
+		for _, part := range transmissionParts {
+			transmissions = append(transmissions, "'"+strings.TrimSpace(part)+"'")
+		}
+		if len(transmissions) > 0 {
+			countConditions = append(countConditions, `transmission IN (`+strings.Join(transmissions, ",")+`)`)
+		}
+	}
+
 	if filter.MileageFrom > 0 {
 		countConditions = append(countConditions, `mileage >= $`+strconv.Itoa(argIndex))
 		argIndex++
@@ -193,6 +205,9 @@ func GetCars(filter CarFilter) ([]Car, int, error) {
 	}
 	if len(fuelTypes) > 0 {
 		conditions = append(conditions, `cars.fuel_type IN (`+strings.Join(fuelTypes, ",")+`)`)
+	}
+	if len(transmissions) > 0 {
+		conditions = append(conditions, `cars.transmission IN (`+strings.Join(transmissions, ",")+`)`)
 	}
 	if filter.MileageFrom > 0 {
 		conditions = append(conditions, `cars.mileage >= $`+strconv.Itoa(argIndex))
