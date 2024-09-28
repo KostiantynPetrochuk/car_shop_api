@@ -45,6 +45,8 @@ type CarFilter struct {
 	FuelType     string
 	Transmission string
 	DriveType    string
+	PriceFrom    int
+	PriceTo      int
 }
 
 func (c *Car) Save() error {
@@ -159,6 +161,15 @@ func GetCars(filter CarFilter) ([]Car, int, error) {
 		argIndex++
 	}
 
+	if filter.PriceFrom > 0 {
+		countConditions = append(countConditions, `price >= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
+	if filter.PriceTo > 0 {
+		countConditions = append(countConditions, `price <= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
+
 	if len(countConditions) > 0 {
 		countQuery += ` WHERE ` + strings.Join(countConditions, ` AND `)
 	}
@@ -175,6 +186,12 @@ func GetCars(filter CarFilter) ([]Car, int, error) {
 	}
 	if filter.MileageTo > 0 {
 		countArgs = append(countArgs, filter.MileageTo)
+	}
+	if filter.PriceFrom > 0 {
+		countArgs = append(countArgs, filter.PriceFrom)
+	}
+	if filter.PriceTo > 0 {
+		countArgs = append(countArgs, filter.PriceTo)
 	}
 
 	err = db.DB.QueryRow(countQuery, countArgs...).Scan(&total)
@@ -232,6 +249,14 @@ func GetCars(filter CarFilter) ([]Car, int, error) {
 		conditions = append(conditions, `cars.mileage <= $`+strconv.Itoa(argIndex))
 		argIndex++
 	}
+	if filter.PriceFrom > 0 {
+		conditions = append(conditions, `cars.price >= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
+	if filter.PriceTo > 0 {
+		conditions = append(conditions, `cars.price <= $`+strconv.Itoa(argIndex))
+		argIndex++
+	}
 
 	if len(conditions) > 0 {
 		query += ` WHERE ` + strings.Join(conditions, ` AND `)
@@ -251,6 +276,12 @@ func GetCars(filter CarFilter) ([]Car, int, error) {
 	}
 	if filter.MileageTo > 0 {
 		args = append(args, filter.MileageTo)
+	}
+	if filter.PriceFrom > 0 {
+		args = append(args, filter.PriceFrom)
+	}
+	if filter.PriceTo > 0 {
+		args = append(args, filter.PriceTo)
 	}
 
 	rows, err := db.DB.Query(query, args...)

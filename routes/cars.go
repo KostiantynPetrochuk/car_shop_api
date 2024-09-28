@@ -187,6 +187,8 @@ func getCars(context *gin.Context) {
 	fuelType := context.DefaultQuery("fuelType", "")
 	transmission := context.DefaultQuery("transmission", "")
 	driveType := context.DefaultQuery("driveType", "")
+	priceFromStr := context.DefaultQuery("priceFrom", "")
+	priceToStr := context.DefaultQuery("priceTo", "")
 
 	var mileageFrom, mileageTo int
 	if mileageFromStr != "" {
@@ -205,6 +207,23 @@ func getCars(context *gin.Context) {
 		}
 	}
 
+	var priceFrom, priceTo int
+	if priceFromStr != "" {
+		priceFrom, err = strconv.Atoi(priceFromStr)
+		if err != nil {
+			context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid priceFrom parameter"})
+			return
+		}
+	}
+
+	if priceToStr != "" {
+		priceTo, err = strconv.Atoi(priceToStr)
+		if err != nil {
+			context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid priceTo parameter"})
+			return
+		}
+	}
+
 	carsFilter := models.CarFilter{
 		Offset:       offset,
 		Limit:        limit,
@@ -217,6 +236,8 @@ func getCars(context *gin.Context) {
 		FuelType:     fuelType,
 		Transmission: transmission,
 		DriveType:    driveType,
+		PriceFrom:    priceFrom,
+		PriceTo:      priceTo,
 	}
 
 	cars, total, err := models.GetCars(carsFilter)
