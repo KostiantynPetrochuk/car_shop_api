@@ -186,6 +186,7 @@ func getCars(context *gin.Context) {
 	mileageToStr := context.DefaultQuery("mileageTo", "")
 	fuelType := context.DefaultQuery("fuelType", "")
 	transmission := context.DefaultQuery("transmission", "")
+	driveType := context.DefaultQuery("driveType", "")
 
 	var mileageFrom, mileageTo int
 	if mileageFromStr != "" {
@@ -215,6 +216,7 @@ func getCars(context *gin.Context) {
 		MileageTo:    mileageTo,
 		FuelType:     fuelType,
 		Transmission: transmission,
+		DriveType:    driveType,
 	}
 
 	cars, total, err := models.GetCars(carsFilter)
