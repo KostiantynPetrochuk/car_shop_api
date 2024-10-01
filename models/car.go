@@ -47,6 +47,7 @@ type CarFilter struct {
 	DriveType    string
 	PriceFrom    int
 	PriceTo      int
+	SortBy       string
 }
 
 func (c *Car) Save() error {
@@ -261,8 +262,16 @@ func GetCars(filter CarFilter) ([]Car, int, error) {
 	if len(conditions) > 0 {
 		query += ` WHERE ` + strings.Join(conditions, ` AND `)
 	}
-	query += ` ORDER BY cars.created_at DESC LIMIT $2 OFFSET $1`
 
+	if filter.SortBy == "price_low_to_high" {
+		query += ` ORDER BY price ASC LIMIT $2 OFFSET $1`
+	}
+	if filter.SortBy == "price_high_to_low" {
+		query += ` ORDER BY price DESC LIMIT $2 OFFSET $1`
+	}
+	if filter.SortBy == "" {
+		query += ` ORDER BY cars.created_at DESC LIMIT $2 OFFSET $1`
+	}
 	var args []interface{}
 	args = append(args, filter.Offset, filter.Limit)
 	if filter.Brand != "" {

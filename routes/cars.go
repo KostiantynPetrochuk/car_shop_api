@@ -189,6 +189,7 @@ func getCars(context *gin.Context) {
 	driveType := context.DefaultQuery("driveType", "")
 	priceFromStr := context.DefaultQuery("priceFrom", "")
 	priceToStr := context.DefaultQuery("priceTo", "")
+	sortBy := context.DefaultQuery("sortBy", "")
 
 	var mileageFrom, mileageTo int
 	if mileageFromStr != "" {
@@ -238,6 +239,7 @@ func getCars(context *gin.Context) {
 		DriveType:    driveType,
 		PriceFrom:    priceFrom,
 		PriceTo:      priceTo,
+		SortBy:       sortBy,
 	}
 
 	cars, total, err := models.GetCars(carsFilter)
